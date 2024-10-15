@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {createContext, useContext, useEffect, useRef, useState} from 'react';
 
 export function Canvas() {
   const canvasRef = useRef<React.ElementRef<'canvas'>>(null);
@@ -16,14 +16,31 @@ export function Canvas() {
 
   return (
     <>
-      <canvas ref={canvasRef} width={500} height={500} />
-      {ctx && <Graphics ctx={ctx} />}
+      <canvas
+        ref={canvasRef}
+        className='max-w-full select-none'
+        width={500}
+        height={500}
+      />
+      <InputProvider>
+        {ctx && <Graphics ctx={ctx} />}
+        <InputKeyboard />
+      </InputProvider>
     </>
   );
 }
 
-function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
-  const [rect] = useState(() => new Rect(ctx));
+const InputContext = createContext<
+  | React.MutableRefObject<{
+      left: boolean;
+      right: boolean;
+      down: boolean;
+      up: boolean;
+    }>
+  | undefined
+>(undefined);
+
+function InputProvider({children}: {children: React.ReactNode}) {
   const inputRef = useRef({
     left: false,
     right: false,
@@ -31,38 +48,20 @@ function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
     up: false,
   });
 
-  useEffect(() => {
-    let frameId: number | undefined;
-    let timeElapsedPrevious = performance.now();
-    const frame: FrameRequestCallback = (timeElapsedMilliseconds) => {
-      const timeElapsed = timeElapsedMilliseconds * 0.001;
-      const timeDelta = timeElapsed - timeElapsedPrevious;
+  return (
+    <InputContext.Provider value={inputRef}>{children}</InputContext.Provider>
+  );
+}
 
-      const speed = 50.0;
-      const input = inputRef.current;
+const useInputRef = () => {
+  const inputRef = useContext(InputContext);
+  if (!inputRef)
+    throw new Error('Can\'t access "useInputRef" outside "InputProvider" tree');
+  return inputRef;
+};
 
-      let dx = 0.0;
-      let dy = 0.0;
-
-      if (input.left) dx += -speed * timeDelta;
-      if (input.right) dx += speed * timeDelta;
-      if (input.down) dy += -speed * timeDelta;
-      if (input.up) dy += speed * timeDelta;
-
-      rect.move(dx, dy);
-      rect.draw();
-
-      timeElapsedPrevious = timeElapsed;
-      frameId = requestAnimationFrame(frame);
-    };
-    frameId = requestAnimationFrame(frame);
-
-    return () => {
-      if (frameId) {
-        cancelAnimationFrame(frameId);
-      }
-    };
-  }, [rect]);
+function InputKeyboard() {
+  const inputRef = useInputRef();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -106,27 +105,64 @@ function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, []);
+  }, [inputRef]);
 
   return null;
 }
 
-class Rect {
-  public x: number = 0.0;
-  public y: number = 0.0;
-  private _ctx: CanvasRenderingContext2D;
+function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
+  const inputRef = useInputRef();
+  const pointRef = useRef({x: 0.0, y: 0.0});
 
-  constructor(ctx: CanvasRenderingContext2D) {
-    this._ctx = ctx;
-  }
+  useEffect(() => {
+    let frameId: number | undefined;
+    let timeElapsedPrevious = performance.now();
+    const frame: FrameRequestCallback = (timeElapsedMilliseconds) => {
+      const timeElapsed = timeElapsedMilliseconds * 0.001;
+      const timeDelta = timeElapsed - timeElapsedPrevious;
 
-  public move(dx: number, dy: number): void {
-    this.x += dx;
-    this.y += dy;
-  }
+      const speed = 100.0;
+      const input = inputRef.current;
+      const point = pointRef.current;
 
-  public draw(): void {
-    this._ctx.fillStyle = '#ffffff';
-    this._ctx.fillRect(this.x, -this.y, 20, 20);
-  }
+      let dx = 0.0;
+      let dy = 0.0;
+
+      if (input.left) dx += -speed * timeDelta;
+      if (input.right) dx += speed * timeDelta;
+      if (input.down) dy += -speed * timeDelta;
+      if (input.up) dy += speed * timeDelta;
+
+      point.x += dx;
+      point.y += dy;
+
+      drawClear(ctx);
+      drawRect(ctx, point.x, point.y);
+
+      timeElapsedPrevious = timeElapsed;
+      frameId = requestAnimationFrame(frame);
+    };
+    frameId = requestAnimationFrame(frame);
+
+    return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [ctx, inputRef]);
+
+  return null;
 }
+
+const drawClear = (ctx: CanvasRenderingContext2D): void => {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+};
+
+const drawRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+): void => {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, -y, 20, 20);
+};
