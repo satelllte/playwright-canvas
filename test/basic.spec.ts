@@ -17,6 +17,8 @@ test('moves', async ({page}) => {
   await page.keyboard.down('ArrowRight');
   await page.clock.runFor(500);
 
+  await expect(page).toHaveScreenshot();
+
   await page.keyboard.down('ArrowDown');
   await page.clock.runFor(500);
 
