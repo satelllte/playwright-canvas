@@ -1,4 +1,4 @@
-import {createContext, useContext, useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 
 export function Canvas() {
   const canvasRef = useRef<React.ElementRef<'canvas'>>(null);
@@ -22,61 +22,33 @@ export function Canvas() {
         width={500}
         height={500}
       />
-      <InputProvider>
-        {ctx && <Graphics ctx={ctx} />}
-        <InputKeyboard />
-      </InputProvider>
+      {ctx && <Graphics ctx={ctx} />}
     </>
   );
 }
 
-const InputContext = createContext<
-  | React.MutableRefObject<{
-      left: boolean;
-      right: boolean;
-      down: boolean;
-      up: boolean;
-    }>
-  | undefined
->(undefined);
-
-function InputProvider({children}: {children: React.ReactNode}) {
-  const inputRef = useRef({
+const useInput = () => {
+  const [input] = useState(() => ({
     left: false,
     right: false,
     down: false,
     up: false,
-  });
-
-  return (
-    <InputContext.Provider value={inputRef}>{children}</InputContext.Provider>
-  );
-}
-
-const useInputRef = () => {
-  const inputRef = useContext(InputContext);
-  if (!inputRef)
-    throw new Error('Can\'t access "useInputRef" outside "InputProvider" tree');
-  return inputRef;
-};
-
-function InputKeyboard() {
-  const inputRef = useInputRef();
+  }));
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       switch (event.key) {
         case 'ArrowLeft':
-          inputRef.current.left = true;
+          input.left = true;
           break;
         case 'ArrowRight':
-          inputRef.current.right = true;
+          input.right = true;
           break;
         case 'ArrowDown':
-          inputRef.current.down = true;
+          input.down = true;
           break;
         case 'ArrowUp':
-          inputRef.current.up = true;
+          input.up = true;
           break;
       }
     };
@@ -84,16 +56,16 @@ function InputKeyboard() {
     const onKeyUp = (event: KeyboardEvent) => {
       switch (event.key) {
         case 'ArrowLeft':
-          inputRef.current.left = false;
+          input.left = false;
           break;
         case 'ArrowRight':
-          inputRef.current.right = false;
+          input.right = false;
           break;
         case 'ArrowDown':
-          inputRef.current.down = false;
+          input.down = false;
           break;
         case 'ArrowUp':
-          inputRef.current.up = false;
+          input.up = false;
           break;
       }
     };
@@ -105,13 +77,13 @@ function InputKeyboard() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [inputRef]);
+  }, [input]);
 
-  return null;
-}
+  return input;
+};
 
 function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
-  const inputRef = useInputRef();
+  const input = useInput();
   const pointRef = useRef({x: 0.0, y: 0.0});
 
   useEffect(() => {
@@ -122,7 +94,6 @@ function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
       const timeDelta = timeElapsed - timeElapsedPrevious;
 
       const speed = 100.0;
-      const input = inputRef.current;
       const point = pointRef.current;
 
       let dx = 0.0;
@@ -149,7 +120,7 @@ function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
         cancelAnimationFrame(frameId);
       }
     };
-  }, [ctx, inputRef]);
+  }, [ctx, input]);
 
   return null;
 }
