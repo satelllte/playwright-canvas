@@ -1,3 +1,3 @@
 # playwright-canvas
 
-Trying out canvas testing via Playwright's mock timers.
+Proof-of-concept demonstrating HTML Canvas scenarios testing via Playwright.
