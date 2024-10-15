@@ -1,0 +1,1 @@
+export {useEffectEvent} from './useEffectEvent';

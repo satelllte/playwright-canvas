@@ -1,4 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
+import {useInput} from './useInput';
+import {useFrame} from './useFrame';
 
 export function Canvas() {
   const canvasRef = useRef<React.ElementRef<'canvas'>>(null);
@@ -22,105 +24,33 @@ export function Canvas() {
         width={500}
         height={500}
       />
-      {ctx && <Graphics ctx={ctx} />}
+      {ctx && <Rect ctx={ctx} />}
     </>
   );
 }
 
-const useInput = () => {
-  const [input] = useState(() => ({
-    left: false,
-    right: false,
-    down: false,
-    up: false,
-  }));
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      switch (event.key) {
-        case 'ArrowLeft':
-          input.left = true;
-          break;
-        case 'ArrowRight':
-          input.right = true;
-          break;
-        case 'ArrowDown':
-          input.down = true;
-          break;
-        case 'ArrowUp':
-          input.up = true;
-          break;
-      }
-    };
-
-    const onKeyUp = (event: KeyboardEvent) => {
-      switch (event.key) {
-        case 'ArrowLeft':
-          input.left = false;
-          break;
-        case 'ArrowRight':
-          input.right = false;
-          break;
-        case 'ArrowDown':
-          input.down = false;
-          break;
-        case 'ArrowUp':
-          input.up = false;
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-    };
-  }, [input]);
-
-  return input;
-};
-
-function Graphics({ctx}: {ctx: CanvasRenderingContext2D}) {
+function Rect({ctx}: {ctx: CanvasRenderingContext2D}) {
   const input = useInput();
   const pointRef = useRef({x: 0.0, y: 0.0});
 
-  useEffect(() => {
-    let frameId: number | undefined;
-    let timeElapsedPrevious = performance.now();
-    const frame: FrameRequestCallback = (timeElapsedMilliseconds) => {
-      const timeElapsed = timeElapsedMilliseconds * 0.001;
-      const timeDelta = timeElapsed - timeElapsedPrevious;
+  useFrame((timeDelta) => {
+    const speed = 100.0;
+    const point = pointRef.current;
 
-      const speed = 100.0;
-      const point = pointRef.current;
+    let dx = 0.0;
+    let dy = 0.0;
 
-      let dx = 0.0;
-      let dy = 0.0;
+    if (input.left) dx += -speed * timeDelta;
+    if (input.right) dx += speed * timeDelta;
+    if (input.down) dy += -speed * timeDelta;
+    if (input.up) dy += speed * timeDelta;
 
-      if (input.left) dx += -speed * timeDelta;
-      if (input.right) dx += speed * timeDelta;
-      if (input.down) dy += -speed * timeDelta;
-      if (input.up) dy += speed * timeDelta;
+    point.x += dx;
+    point.y += dy;
 
-      point.x += dx;
-      point.y += dy;
-
-      drawClear(ctx);
-      drawRect(ctx, point.x, point.y);
-
-      timeElapsedPrevious = timeElapsed;
-      frameId = requestAnimationFrame(frame);
-    };
-    frameId = requestAnimationFrame(frame);
-
-    return () => {
-      if (frameId) {
-        cancelAnimationFrame(frameId);
-      }
-    };
-  }, [ctx, input]);
+    drawClear(ctx);
+    drawRect(ctx, point.x, point.y);
+  });
 
   return null;
 }
