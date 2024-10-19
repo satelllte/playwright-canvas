@@ -16,6 +16,12 @@ Then, clone this repo, open a terminal in its parent directory and install depen
 npm i
 ```
 
+Build the app example:
+
+```sh
+npm run build
+```
+
 Install Playwright's browsers:
 
 ```sh
