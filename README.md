@@ -10,13 +10,7 @@ The key idea is to leverage Playwright's [Clock API](https://playwright.dev/docs
 
 Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-Then, clone this repo:
-
-```sh
-git clone
-```
-
-Install dependencies:
+Then, clone this repo, open a terminal in its parent directory and install dependencies:
 
 ```sh
 npm i
