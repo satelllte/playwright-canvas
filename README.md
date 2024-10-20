@@ -4,7 +4,7 @@ Proof-of-concept demonstrating HTML Canvas scenarios testing via Playwright.
 
 ## About
 
-The key idea is to leverage Playwright's [Clock API](https://playwright.dev/docs/clock) API along with the [Visual comparisons](https://playwright.dev/docs/test-snapshots) abilities. This allows end-to-end testing for various HTML Canvas scenarios such as gameplay loops, 3D scenes, fragment shaders outputs, etc.
+The key idea is to leverage Playwright's [Clock API](https://playwright.dev/docs/clock) along with the [Visual comparisons](https://playwright.dev/docs/test-snapshots) abilities. This allows end-to-end testing for various HTML Canvas scenarios such as gameplay loops, 3D scenes, fragment shaders outputs, etc.
 
 ## Getting started
 
